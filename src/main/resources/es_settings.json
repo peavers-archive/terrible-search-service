@@ -2,23 +2,34 @@
   "settings": {
     "analysis": {
       "analyzer": {
-        "terrible_analyzer": {
-          "tokenizer": "terrible_tokenizer"
+        "fscrawler_path": {
+          "tokenizer": "fscrawler_path"
         }
       },
       "tokenizer": {
-        "terrible_tokenizer": {
-          "type": "pattern"
+        "fscrawler_path": {
+          "type": "path_hierarchy"
         }
       }
     }
   },
   "mappings": {
-    "mediaFile": {
-      "properties": {
-        "absolutePath": {
-          "type": "text",
-          "analyzer": "terrible_analyzer"
+    "properties": {
+      "name": {
+        "type": "keyword",
+        "store": true
+      },
+      "absolutePath": {
+        "type": "keyword",
+        "fields": {
+          "tree": {
+            "type": "text",
+            "analyzer": "fscrawler_path",
+            "fielddata": true
+          },
+          "fulltext": {
+            "type": "text"
+          }
         }
       }
     }

@@ -1,14 +1,9 @@
 /* Licensed under Apache-2.0 */
-package io.terrible.search.services;
 
-import static org.elasticsearch.common.Strings.isNullOrEmpty;
+package io.terrible.search.services;
 
 import io.terrible.search.domain.IndexObject;
 import io.terrible.search.utils.JsonUtil;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -31,101 +26,107 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-/** @author Chris Turner (chris@forloop.space) */
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+
+import static org.elasticsearch.common.Strings.isNullOrEmpty;
+
+/**
+ * @author Chris Turner (chris@forloop.space)
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class SearchServiceImpl implements SearchService {
 
-  public static final String SETTINGS_JSON = "es_settings.json";
+    public static final String SETTINGS_JSON = "es_settings.json";
 
-  public static final String SEARCH_FIELD = "absolutePath";
+    private final RestHighLevelClient restHighLevelClient;
 
-  private final RestHighLevelClient restHighLevelClient;
+    private final BulkProcessor bulkProcessor;
 
-  private final BulkProcessor bulkProcessor;
+    @Override
+    public Mono<Void> createIndex(final String index) throws IOException {
 
-  @Override
-  public Mono<Void> createIndex(final String index) throws IOException {
+        if (isExistingIndex(index)) {
+            return Mono.empty();
+        }
 
-    if (isExistingIndex(index)) {
-      return Mono.empty();
+        final Resource resource = new ClassPathResource(SETTINGS_JSON);
+        final String indexSettings = FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
+        final CreateIndexRequest createIndexRequest = new CreateIndexRequest(index);
+
+        if (!isNullOrEmpty(indexSettings)) {
+            createIndexRequest.source(indexSettings, XContentType.JSON);
+        }
+
+        try {
+            restHighLevelClient.indices().create(createIndexRequest, RequestOptions.DEFAULT);
+        } catch (final ElasticsearchStatusException e) {
+            log.error("Unable to create index {} {}", e.getMessage(), e);
+        }
+
+        restHighLevelClient.cluster()
+                .health(new ClusterHealthRequest(index).waitForYellowStatus(), RequestOptions.DEFAULT);
+
+        return Mono.empty();
     }
 
-    final Resource resource = new ClassPathResource(SETTINGS_JSON);
-    final String indexSettings =
-        FileUtils.readFileToString(resource.getFile(), StandardCharsets.UTF_8);
-    final CreateIndexRequest createIndexRequest = new CreateIndexRequest(index);
+    @Override
+    public Mono<Void> flush() {
 
-    if (!isNullOrEmpty(indexSettings)) {
-      createIndexRequest.source(indexSettings, XContentType.JSON);
+        bulkProcessor.flush();
+
+        return Mono.empty();
     }
 
-    try {
-      restHighLevelClient.indices().create(createIndexRequest, RequestOptions.DEFAULT);
-    } catch (final ElasticsearchStatusException e) {
-      log.error("Unable to create index {} {}", e.getMessage(), e);
+    @Override
+    public Mono<Void> index(final String index, final String id, final String json) {
+
+        bulkProcessor.add(new IndexRequest(index).id(id).source(json, XContentType.JSON));
+
+        return Mono.empty();
     }
 
-    restHighLevelClient
-        .cluster()
-        .health(new ClusterHealthRequest(index).waitForYellowStatus(), RequestOptions.DEFAULT);
+    @Override
+    public Mono<Void> indexSingle(final String index, final String id, final String json) throws IOException {
 
-    return Mono.empty();
-  }
+        restHighLevelClient.index(new IndexRequest(index).id(id).source(json, XContentType.JSON),
+                RequestOptions.DEFAULT);
 
-  @Override
-  public Mono<Void> flush() {
+        return Mono.empty();
+    }
 
-    bulkProcessor.flush();
+    @Override
+    public ArrayList<IndexObject> search(final String index, final String query) throws IOException {
 
-    return Mono.empty();
-  }
+        log.info("Query {}", query);
 
-  @Override
-  public Mono<Void> index(final String index, final String id, final String json) {
+        final SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        sourceBuilder.query(QueryBuilders.termQuery("absolutePath", query));
+        sourceBuilder.from(0);
+        sourceBuilder.size(50);
+        sourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
 
-    bulkProcessor.add(new IndexRequest(index).id(id).source(json, XContentType.JSON));
+        final SearchRequest searchRequest = new SearchRequest();
+        searchRequest.indices(index);
+        searchRequest.source(sourceBuilder);
 
-    return Mono.empty();
-  }
+        final SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
 
-  @Override
-  public Mono<Void> indexSingle(final String index, final String id, final String json)
-      throws IOException {
+        final ArrayList<IndexObject> results = new ArrayList<>();
+        searchResponse.getHits().forEach(searchHit -> results.add(JsonUtil.convertSourceMap(searchHit)));
 
-    restHighLevelClient.index(
-        new IndexRequest(index).id(id).source(json, XContentType.JSON), RequestOptions.DEFAULT);
+        log.info("Results {}", results);
 
-    return Mono.empty();
-  }
+        return results;
+    }
 
-  @Override
-  public ArrayList<IndexObject> search(final String index, final String query) throws IOException {
+    private boolean isExistingIndex(final String index) throws IOException {
 
-    final SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-    sourceBuilder.query(QueryBuilders.termsQuery(SEARCH_FIELD, query));
-    sourceBuilder.from(0);
-    sourceBuilder.size(50);
-    sourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
+        return restHighLevelClient.indices().exists(new GetIndexRequest(index), RequestOptions.DEFAULT);
+    }
 
-    final SearchRequest searchRequest = new SearchRequest();
-    searchRequest.indices(index);
-    searchRequest.source(sourceBuilder);
-
-    final SearchResponse searchResponse =
-        restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-
-    final ArrayList<IndexObject> results = new ArrayList<>();
-    searchResponse
-        .getHits()
-        .forEach(searchHit -> results.add(JsonUtil.convertSourceMap(searchHit)));
-
-    return results;
-  }
-
-  private boolean isExistingIndex(final String index) throws IOException {
-
-    return restHighLevelClient.indices().exists(new GetIndexRequest(index), RequestOptions.DEFAULT);
-  }
 }
