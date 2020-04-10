@@ -1,8 +1,7 @@
 /* Licensed under Apache-2.0 */
-
 package io.terrible.search.controller;
 
-import io.terrible.search.domain.MediaFile;
+import io.terrible.search.domain.IndexObject;
 import io.terrible.search.services.DataService;
 import io.terrible.search.services.SearchService;
 import lombok.RequiredArgsConstructor;
@@ -20,42 +19,40 @@ import java.io.IOException;
 
 import static io.terrible.search.utils.JsonUtil.toJson;
 
-/**
- * @author Chris Turner (chris@forloop.space)
- */
+/** @author Chris Turner (chris@forloop.space) */
 @Slf4j
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor
 public class SearchController {
 
-    private final SearchService searchService;
+  private final SearchService searchService;
 
-    private final DataService dataService;
+  private final DataService dataService;
 
-    @PostMapping("/search/create-index")
-    public Mono<Void> createIndex(@RequestParam final String index) throws IOException {
+  @PostMapping("/search/create-index")
+  public Mono<Void> createIndex(@RequestParam final String index) throws IOException {
 
-        return searchService.createIndex(index);
-    }
+    return searchService.createIndex(index);
+  }
 
-    @PostMapping("/search/index-single")
-    public Mono<Void> indexSingle(@RequestParam final String index, @RequestBody final MediaFile mediaFile) {
+  @PostMapping("/search/index-single")
+  public Mono<Void> indexSingle(
+      @RequestParam final String index, @RequestBody final IndexObject indexObject) {
 
-        return searchService.index(index, mediaFile.getId(), toJson(mediaFile));
-    }
+    return searchService.index(index, indexObject.getId(), toJson(indexObject));
+  }
 
-    @PostMapping("/search/index")
-    public Flux<Void> index(@RequestParam final String index) {
+  @PostMapping("/search/index")
+  public Flux<Void> index(@RequestParam final String index) {
 
-        return dataService.get(index, "media-files");
-    }
+    return dataService.get(index, "media-files");
+  }
 
-    @GetMapping("/search")
-    public Flux<MediaFile> search(@RequestParam final String index, @RequestParam final String query)
-            throws IOException {
+  @GetMapping("/search")
+  public Flux<IndexObject> search(
+      @RequestParam final String index, @RequestParam final String query) throws IOException {
 
-        return Flux.fromIterable(searchService.search(index, query));
-    }
-
+    return Flux.fromIterable(searchService.search(index, query));
+  }
 }

@@ -1,11 +1,10 @@
 /* Licensed under Apache-2.0 */
 package io.terrible.search.services;
 
-import io.terrible.search.domain.MediaFile;
-import reactor.core.publisher.Mono;
-
+import io.terrible.search.domain.IndexObject;
 import java.io.IOException;
 import java.util.ArrayList;
+import reactor.core.publisher.Mono;
 
 /** @author Chris Turner (chris@forloop.space) */
 public interface SearchService {
@@ -18,5 +17,5 @@ public interface SearchService {
 
   Mono<Void> flush();
 
-  ArrayList<MediaFile> search(String index, String query) throws IOException;
+  ArrayList<IndexObject> search(String index, String query) throws IOException;
 }

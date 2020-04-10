@@ -1,3 +1,6 @@
-# Terrible Template
+# Terrible Search Service
 
-Just a repository template setup with the bits I like.
+Wraps around Elasticsearch with configuration values I need for this terrible project. This 
+is purposefully not generic.
+
+A lot of blocking calls still to be cleaned up. 
