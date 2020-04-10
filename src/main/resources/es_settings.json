@@ -3,12 +3,11 @@
     "analysis": {
       "analyzer": {
         "fscrawler_path": {
-          "tokenizer": "fscrawler_path"
-        }
-      },
-      "tokenizer": {
-        "fscrawler_path": {
-          "type": "path_hierarchy"
+          "tokenizer": "keyword",
+          "filter": [
+            "word_delimiter",
+            "lowercase"
+          ]
         }
       }
     }
@@ -20,17 +19,8 @@
         "store": true
       },
       "absolutePath": {
-        "type": "keyword",
-        "fields": {
-          "tree": {
-            "type": "text",
-            "analyzer": "fscrawler_path",
-            "fielddata": true
-          },
-          "fulltext": {
-            "type": "text"
-          }
-        }
+        "type": "text",
+        "analyzer": "fscrawler_path"
       }
     }
   }
