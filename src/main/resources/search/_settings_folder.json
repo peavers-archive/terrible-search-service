@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "terrible_path": {
+          "tokenizer": "terrible_path"
+        }
+      },
+      "tokenizer": {
+        "terrible_path": {
+          "type": "path_hierarchy"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties" : {
+      "real" : {
+        "type" : "keyword",
+        "store" : true
+      },
+      "root" : {
+        "type" : "keyword",
+        "store" : true
+      },
+      "virtual" : {
+        "type" : "keyword",
+        "store" : true
+      }
+    }
+  }
+}

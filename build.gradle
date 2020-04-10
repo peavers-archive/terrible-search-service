@@ -30,10 +30,16 @@ ext {
 
 dependencies {
     // Spring
-    
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
     // Apache
     implementation 'org.apache.commons:commons-lang3:3.10'
     implementation 'commons-io:commons-io:2.6'
+
+    // Search
+    implementation group: 'org.elasticsearch', name: 'elasticsearch', version: '7.6.1'
+    implementation group: 'org.elasticsearch.client', name: 'elasticsearch-rest-client', version: '7.6.1'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.6.1'
 
     // Development
     compileOnly 'org.projectlombok:lombok'
@@ -77,10 +83,3 @@ publishing {
         mavenLocal()
     }
 }
-
-task installGitHook(type: Copy) {
-    from new File(rootProject.rootDir, 'pre-commit')
-    into { new File(rootProject.rootDir, '.git/hooks') }
-    fileMode 0777
-}
-tasks.getByPath(':build').dependsOn installGitHook

@@ -1,0 +1,26 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "terrible_analyzer": {
+          "tokenizer": "terrible_tokenizer"
+        }
+      },
+      "tokenizer": {
+        "terrible_tokenizer": {
+          "type": "pattern"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "mediaFile": {
+      "properties": {
+        "absolutePath": {
+          "type": "text",
+          "analyzer": "terrible_analyzer"
+        }
+      }
+    }
+  }
+}
