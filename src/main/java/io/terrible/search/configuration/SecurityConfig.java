@@ -7,7 +7,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
-/** @author Chris Turner (chris@forloop.space) */
 public class SecurityConfig {
 
   private static final String SECURE_ROUTE = "/*/**";

@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/** @author Chris Turner (chris@forloop.space) */
 @Data
 @Builder
 @AllArgsConstructor

@@ -1,14 +1,20 @@
 /* Licensed under Apache-2.0 */
-
 package io.terrible.search.services;
+
+import static org.elasticsearch.common.Strings.isNullOrEmpty;
 
 import io.terrible.search.domain.IndexObject;
 import io.terrible.search.utils.JsonUtil;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -24,16 +30,9 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-
-import static org.elasticsearch.common.Strings.isNullOrEmpty;
-
-/** @author Chris Turner (chris@forloop.space) */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -91,17 +90,7 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public Mono<Void> indexSingle(final String index, final String id, final String json)
-      throws IOException {
-
-    restHighLevelClient.index(
-        new IndexRequest(index).id(id).source(json, XContentType.JSON), RequestOptions.DEFAULT);
-
-    return Mono.empty();
-  }
-
-  @Override
-  public ArrayList<IndexObject> search(final String index, final String query) throws IOException {
+  public Flux<IndexObject> search(final String index, final String query) throws IOException {
 
     log.info("Query {}", query);
 
@@ -125,7 +114,17 @@ public class SearchServiceImpl implements SearchService {
 
     log.info("Count: {} Hits: {}", results.size(), results);
 
-    return results;
+    return Flux.fromIterable(results);
+  }
+
+  @Override
+  public Mono<Void> deleteIndex(final String index) {
+
+    restHighLevelClient
+        .indices()
+        .deleteAsync(new DeleteIndexRequest(index), RequestOptions.DEFAULT, null);
+
+    return Mono.empty();
   }
 
   private boolean isExistingIndex(final String index) throws IOException {
