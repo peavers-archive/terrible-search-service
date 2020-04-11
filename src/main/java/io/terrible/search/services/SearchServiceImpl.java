@@ -1,14 +1,8 @@
 /* Licensed under Apache-2.0 */
 package io.terrible.search.services;
 
-import static org.elasticsearch.common.Strings.isNullOrEmpty;
-
 import io.terrible.search.domain.IndexObject;
 import io.terrible.search.utils.JsonUtil;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -32,6 +26,13 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
+
+import static org.elasticsearch.common.Strings.isNullOrEmpty;
 
 @Slf4j
 @Service
@@ -94,10 +95,15 @@ public class SearchServiceImpl implements SearchService {
 
     log.info("Query {}", query);
 
+    if (!isExistingIndex(index)) {
+      log.info("{} does not exist, skipping search", index);
+      return Flux.empty();
+    }
+
     final SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
     sourceBuilder.query(QueryBuilders.wildcardQuery("absolutePath", "*" + query + "*"));
     sourceBuilder.from(0);
-    sourceBuilder.size(25);
+    sourceBuilder.size(500);
     sourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
 
     final SearchRequest searchRequest = new SearchRequest();
