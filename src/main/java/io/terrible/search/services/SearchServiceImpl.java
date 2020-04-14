@@ -1,8 +1,14 @@
 /* Licensed under Apache-2.0 */
 package io.terrible.search.services;
 
-import io.terrible.search.domain.IndexObject;
+import static org.elasticsearch.common.Strings.isNullOrEmpty;
+
+import io.terrible.search.domain.MediaFile;
 import io.terrible.search.utils.JsonUtil;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -26,13 +32,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-
-import static org.elasticsearch.common.Strings.isNullOrEmpty;
 
 @Slf4j
 @Service
@@ -91,7 +90,7 @@ public class SearchServiceImpl implements SearchService {
   }
 
   @Override
-  public Flux<IndexObject> search(final String index, final String query) throws IOException {
+  public Flux<MediaFile> search(final String index, final String query) throws IOException {
 
     log.info("Query {}", query);
 
@@ -101,7 +100,7 @@ public class SearchServiceImpl implements SearchService {
     }
 
     final SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-    sourceBuilder.query(QueryBuilders.wildcardQuery("absolutePath", "*" + query + "*"));
+    sourceBuilder.query(QueryBuilders.wildcardQuery("name", "*" + query + "*"));
     sourceBuilder.from(0);
     sourceBuilder.size(500);
     sourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
@@ -113,7 +112,7 @@ public class SearchServiceImpl implements SearchService {
     final SearchResponse searchResponse =
         restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
 
-    final ArrayList<IndexObject> results = new ArrayList<>();
+    final ArrayList<MediaFile> results = new ArrayList<>();
     searchResponse
         .getHits()
         .forEach(searchHit -> results.add(JsonUtil.convertSourceMap(searchHit)));

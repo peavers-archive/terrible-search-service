@@ -3,21 +3,28 @@ package io.terrible.search.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.terrible.search.domain.IndexObject;
-import lombok.experimental.UtilityClass;
+import io.terrible.search.domain.MediaFile;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.search.SearchHit;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Slf4j
-@UtilityClass
+@Component
 public class JsonUtil {
 
-  private final ObjectMapper objectMapper = new ObjectMapper();
+  private static ObjectMapper objectMapper;
 
-  public static String toJson(final IndexObject indexObject) {
+  @Autowired
+  public JsonUtil(final ObjectMapper objectMapper) {
+
+    JsonUtil.objectMapper = objectMapper;
+  }
+
+  public static String toJson(final MediaFile mediaFile) {
 
     try {
-      return objectMapper.writeValueAsString(indexObject);
+      return objectMapper.writeValueAsString(mediaFile);
     } catch (final JsonProcessingException e) {
       log.error("Unable to parse to json {}", e.getMessage(), e);
 
@@ -25,12 +32,12 @@ public class JsonUtil {
     }
   }
 
-  public static IndexObject convertSourceMap(final SearchHit searchHit) {
+  public static MediaFile convertSourceMap(final SearchHit searchHit) {
 
-    final IndexObject indexObject =
-        objectMapper.convertValue(searchHit.getSourceAsMap(), IndexObject.class);
-    indexObject.setId(searchHit.getId());
+    final MediaFile mediaFile =
+        objectMapper.convertValue(searchHit.getSourceAsMap(), MediaFile.class);
+    mediaFile.setId(searchHit.getId());
 
-    return indexObject;
+    return mediaFile;
   }
 }

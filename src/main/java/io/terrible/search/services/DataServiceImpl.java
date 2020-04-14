@@ -3,7 +3,7 @@ package io.terrible.search.services;
 
 import static io.terrible.search.utils.JsonUtil.toJson;
 
-import io.terrible.search.domain.IndexObject;
+import io.terrible.search.domain.MediaFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,7 @@ public class DataServiceImpl implements DataService {
         .get()
         .uri(uriBuilder -> uriBuilder.path(path).build())
         .retrieve()
-        .bodyToFlux(IndexObject.class)
+        .bodyToFlux(MediaFile.class)
         .flatMap(value -> searchService.index(index, value.getId(), toJson(value)))
         .doOnComplete(searchService::flush);
   }

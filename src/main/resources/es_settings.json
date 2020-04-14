@@ -18,7 +18,7 @@
         "type": "keyword",
         "store": true
       },
-      "absolutePath": {
+      "path": {
         "type": "text",
         "analyzer": "fscrawler_path"
       }

@@ -1,7 +1,7 @@
 /* Licensed under Apache-2.0 */
 package io.terrible.search.controller;
 
-import io.terrible.search.domain.IndexObject;
+import io.terrible.search.domain.MediaFile;
 import io.terrible.search.services.SearchService;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +19,8 @@ public class SearchController {
   private final SearchService searchService;
 
   @GetMapping
-  public Flux<IndexObject> search(
-      @RequestParam final String index, @RequestParam final String query) throws IOException {
+  public Flux<MediaFile> search(@RequestParam final String index, @RequestParam final String query)
+      throws IOException {
 
     return searchService.search(index, query);
   }
