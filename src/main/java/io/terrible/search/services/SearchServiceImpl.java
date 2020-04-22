@@ -1,8 +1,14 @@
 /* Licensed under Apache-2.0 */
 package io.terrible.search.services;
 
+import static org.elasticsearch.common.Strings.isNullOrEmpty;
+
 import io.terrible.search.domain.MediaFile;
 import io.terrible.search.utils.JsonUtil;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -26,13 +32,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-
-import static org.elasticsearch.common.Strings.isNullOrEmpty;
 
 @Slf4j
 @Service
